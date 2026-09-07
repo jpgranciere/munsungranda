@@ -34,7 +34,7 @@ const STORY_SLIDES = [
   {
     badge: "★ Nosso Lar • Meu Anjo",
     title: "A nossa casa: O início do resto das nossas vidas",
-    text: "A nossa casa. A nossa primeira noite nela, o colchão no chão e uma pizza dividida com os olhos brilhando e o coração explodindo de orgulho. Essa foto guarda o início de tudo o que sonhamos e estamos construindo tijolo por tijolo. Naquele momento, tive a certeza mais linda do mundo: casa nunca foram quatro paredes de tijolo... a minha casa sempre foi o seu abraço. Você é o meu anjo, minha paz, meu refúgio e o amor da minha vida. Eu te amo pra sempre.",
+    text: "A nossa casa. A nossa primeira noite nela, o colchão no chão e uma pizza dividida com os olhos brilhando e o coração explodindo de orgulho. Essa foto guarda o início de tudo o que sonhamos. Naquele momento, tive a certeza mais linda do mundo: casa nunca foram quatro paredes... a minha casa sempre foi o seu abraço. Eu sei que errei e que demorei para enxergar certas coisas, mas estou aqui de coração aberto para lutar por nós. Eu quero casar com você, Marcela. Você é o meu anjo, minha paz e o amor da minha vida. Te amo pra sempre.",
     image: "assets/images/meuanjo.jpeg"
   }
 ];
