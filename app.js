@@ -91,6 +91,31 @@ const slideFinaleActions = document.getElementById('slide-finale-actions');
 const btnFinaleLetter = document.getElementById('btn-finale-letter');
 const btnFinaleRestart = document.getElementById('btn-finale-restart');
 
+const slideBottomSheet = document.getElementById('slide-bottom-sheet');
+const sheetDragHandle = document.getElementById('sheet-drag-handle');
+const sheetCloseBtn = document.getElementById('sheet-close-btn');
+
+function expandSheet() {
+  if (!slideBottomSheet) return;
+  slideBottomSheet.classList.remove('collapsed');
+  slideBottomSheet.classList.add('expanded');
+}
+
+function collapseSheet() {
+  if (!slideBottomSheet) return;
+  slideBottomSheet.classList.add('collapsed');
+  slideBottomSheet.classList.remove('expanded');
+}
+
+function toggleSheet() {
+  if (!slideBottomSheet) return;
+  if (slideBottomSheet.classList.contains('expanded')) {
+    collapseSheet();
+  } else {
+    expandSheet();
+  }
+}
+
 // ==========================================================
 // 3. SINTETIZADOR DO SOM "TUDUM" (WEB AUDIO API)
 // 100% confiável, funciona offline e em qualquer celular
@@ -270,13 +295,17 @@ function renderSlide(index) {
   const percent = ((index + 1) / STORY_SLIDES.length) * 100;
   timelineProgress.style.width = `${percent}%`;
 
-  // Se for o último slide (o da casinha / meuanjo), exibe botões finais e celebra!
+  // Sempre recolhe a gaveta no início do slide para a foto aparecer 100% limpa!
+  collapseSheet();
+
+  // Se for o último slide (o da casinha / meuanjo), exibe botões finais, abre a gaveta após 1.5s e celebra!
   if (index === STORY_SLIDES.length - 1) {
     if (slideFinaleActions) slideFinaleActions.style.display = 'flex';
     stopAutoSlide();
     setTimeout(() => {
+      expandSheet();
       spawnHeartBurst(window.innerWidth / 2, window.innerHeight * 0.35, 30);
-    }, 600);
+    }, 1200);
   } else {
     if (slideFinaleActions) slideFinaleActions.style.display = 'none';
   }
@@ -419,6 +448,51 @@ if (btnFinaleRestart) {
   btnFinaleRestart.addEventListener('click', () => {
     openPlayerAtSlide(0);
   });
+}
+
+// Interações da Gaveta Retrátil de Texto
+if (sheetDragHandle) {
+  sheetDragHandle.addEventListener('click', toggleSheet);
+}
+
+if (sheetCloseBtn) {
+  sheetCloseBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    collapseSheet();
+  });
+}
+
+// Toque na foto alterna/recolhe a gaveta
+if (playerCurrentImg) {
+  playerCurrentImg.addEventListener('click', () => {
+    if (slideBottomSheet && slideBottomSheet.classList.contains('expanded')) {
+      collapseSheet();
+    } else {
+      toggleSheet();
+    }
+  });
+}
+
+// Gestos verticais na gaveta (arrastar para cima abre, para baixo fecha)
+let sheetTouchStartY = 0;
+let sheetTouchEndY = 0;
+
+if (slideBottomSheet) {
+  slideBottomSheet.addEventListener('touchstart', (e) => {
+    sheetTouchStartY = e.changedTouches[0].screenY;
+  }, { passive: true });
+
+  slideBottomSheet.addEventListener('touchend', (e) => {
+    sheetTouchEndY = e.changedTouches[0].screenY;
+    const diffY = sheetTouchStartY - sheetTouchEndY;
+    if (diffY > 35) {
+      // Arrastou para cima -> expande
+      expandSheet();
+    } else if (diffY < -35) {
+      // Arrastou para baixo -> recolhe
+      collapseSheet();
+    }
+  }, { passive: true });
 }
 
 // ==========================================================

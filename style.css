@@ -867,43 +867,159 @@ html, body {
 .slide-vignette {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.65) 100%),
-              linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 20%, transparent 60%, rgba(0,0,0,0.9) 100%);
+  background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 15%, transparent 75%, rgba(0,0,0,0.85) 100%);
   pointer-events: none;
 }
 
-/* Cartão de Legenda / Mensagem Romântica */
-.slide-caption-card {
-  position: relative;
-  z-index: 30;
-  width: calc(100% - 32px);
-  max-width: 680px;
-  background: rgba(18, 18, 18, 0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  padding: 16px 20px;
+/* ==========================================================
+   GAVETA RETRÁTIL DE TEXTO (BOTTOM SHEET DRAWER)
+   Deixa as fotos 100% visíveis por padrão!
+   ========================================================== */
+.slide-bottom-sheet {
+  position: absolute;
+  bottom: 60px;
+  left: 12px;
+  right: 12px;
+  max-width: 620px;
+  margin: 0 auto;
+  z-index: 35;
+  background: rgba(18, 18, 18, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 16px;
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.85);
-  animation: slideCaptionUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-@keyframes slideCaptionUp {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Barra de Puxar / Handle da Gaveta */
+.sheet-drag-handle {
+  padding: 10px 16px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  user-select: none;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid transparent;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.sheet-drag-handle:hover, .sheet-drag-handle:active {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.sheet-handle-bar {
+  width: 42px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: 3px;
+  margin-bottom: 8px;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.sheet-drag-handle:hover .sheet-handle-bar {
+  background: rgba(255, 255, 255, 0.8);
+  transform: scaleX(1.15);
+}
+
+.sheet-peek-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sheet-peek-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #ff4d58;
+  animation: pulseHint 1.8s infinite ease-in-out;
+}
+
+.chevron-up-icon {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Conteúdo com rolagem */
+.sheet-content-scroll {
+  padding: 0 18px 18px 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+}
+
+.sheet-close-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+  color: #ffffff;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.sheet-close-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Estado Recolhido (Collapsed - Padrão para ver toda a foto!) */
+.slide-bottom-sheet.collapsed .sheet-content-scroll {
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  pointer-events: none;
+}
+
+.slide-bottom-sheet.collapsed .chevron-up-icon {
+  transform: rotate(0deg);
+}
+
+/* Estado Expandido (Ao puxar para cima ou clicar) */
+.slide-bottom-sheet.expanded {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.slide-bottom-sheet.expanded .sheet-drag-handle {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.slide-bottom-sheet.expanded .sheet-content-scroll {
+  max-height: 60vh;
+  opacity: 1;
+  padding-top: 14px;
+  pointer-events: all;
+}
+
+.slide-bottom-sheet.expanded .chevron-up-icon {
+  transform: rotate(180deg);
+}
+
+.slide-bottom-sheet.expanded .sheet-peek-hint {
+  color: var(--text-gray);
+  animation: none;
+}
+
+.slide-bottom-sheet.expanded .sheet-peek-hint span {
+  display: none;
 }
 
 .caption-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .caption-badge {
@@ -923,6 +1039,7 @@ html, body {
   gap: 6px;
   font-size: 0.72rem;
   color: var(--text-gray);
+  margin-bottom: 10px;
 }
 
 .music-wave-bar {
@@ -950,16 +1067,15 @@ html, body {
 }
 
 .caption-title {
-  font-size: clamp(1rem, 3.5vw, 1.25rem);
+  font-size: clamp(1rem, 3.5vw, 1.2rem);
   font-weight: 700;
   color: #ffffff;
-  margin-bottom: 8px;
   line-height: 1.3;
 }
 
 .caption-text {
   font-size: clamp(0.85rem, 2.7vw, 0.96rem);
-  line-height: 1.55;
+  line-height: 1.6;
   color: #dedede;
   font-weight: 400;
 }
