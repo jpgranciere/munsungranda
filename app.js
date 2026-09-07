@@ -517,55 +517,65 @@ function triggerMarcelaHeartFormation(originX, originY) {
   marcelaCanvas.width = width;
   marcelaCanvas.height = height;
 
-  // 1. Gera coordenadas dos pontos da palavra "MARCELA" usando um canvas offscreen
+  // 1. Distribuição espaçada e individual das letras de M - A - R - C - E - L - A
+  const letters = ["M", "A", "R", "C", "E", "L", "A"];
+  const availableWidth = Math.min(width * 0.94, 580);
+  const colWidth = availableWidth / letters.length;
+  const fontSize = Math.min(colWidth * 1.05, width < 500 ? 46 : 68);
+  const startX = (width - availableWidth) / 2 + colWidth / 2;
+  const centerY = height * 0.40;
+
+  // Renderiza no canvas offscreen para amostragem dos pontos
   const offCanvas = document.createElement('canvas');
   offCanvas.width = width;
   offCanvas.height = height;
   const offCtx = offCanvas.getContext('2d', { willReadFrequently: true });
 
-  const fontSize = width < 500 ? Math.floor(width * 0.125) : Math.min(85, Math.floor(width * 0.085));
-  offCtx.font = `900 ${fontSize}px 'Montserrat', -apple-system, sans-serif`;
+  offCtx.font = `900 ${fontSize}px 'Montserrat', Arial, sans-serif`;
   offCtx.textAlign = 'center';
   offCtx.textBaseline = 'middle';
   offCtx.fillStyle = '#ff0000';
 
-  const centerY = height * 0.44;
-  offCtx.fillText("MARCELA", width / 2, centerY);
+  letters.forEach((char, i) => {
+    offCtx.fillText(char, startX + i * colWidth, centerY);
+  });
 
   const imgData = offCtx.getImageData(0, 0, width, height).data;
   const targetPoints = [];
-  const step = width < 500 ? 7 : 9;
+  // Espaçamento entre os corações para não empelotar
+  const step = width < 500 ? 8 : 10;
 
   for (let y = 0; y < height; y += step) {
     for (let x = 0; x < width; x += step) {
       const alpha = imgData[(y * width + x) * 4 + 3];
-      if (alpha > 128) {
+      if (alpha > 140) {
         targetPoints.push({ x, y });
       }
     }
   }
 
-  // 2. Cria as partículas de coração
-  const heartsPalette = ['❤️', '💖', '💕', '💘', '✨'];
+  // 2. Cria as partículas de coração com tamanho proporcional e não sobreposto
+  const heartsPalette = ['❤️', '💖', '💕', '💘'];
   const particles = targetPoints.map(target => {
     const angle = Math.random() * Math.PI * 2;
-    const speed = Math.random() * 14 + 4;
+    const speed = Math.random() * 12 + 4;
     return {
       x: originX,
       y: originY,
       vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed - (Math.random() * 8 + 5),
+      vy: Math.sin(angle) * speed - (Math.random() * 8 + 4),
       tx: target.x,
       ty: target.y,
       char: heartsPalette[Math.floor(Math.random() * heartsPalette.length)],
-      size: Math.random() * 6 + (width < 500 ? 14 : 18),
+      // Tamanho reduzido para agir como "pixels" nítidos
+      size: width < 500 ? 10 : 13,
       alpha: 1,
       scale: 1,
-      damping: Math.random() * 0.04 + 0.06
+      damping: Math.random() * 0.04 + 0.07
     };
   });
 
-  spawnHeartBurst(originX, originY, 12);
+  spawnHeartBurst(originX, originY, 14);
 
   const startTime = performance.now();
   let subtitleShown = false;
@@ -574,7 +584,35 @@ function triggerMarcelaHeartFormation(originX, originY) {
     const elapsed = now - startTime;
     ctx.clearRect(0, 0, width, height);
 
-    if (elapsed > 1300 && !subtitleShown) {
+    // Cortina escura cinematográfica de fundo para dar 100% de contraste
+    const scrimAlpha = elapsed < 400 ? (elapsed / 400) * 0.88 :
+                       elapsed < 4600 ? 0.88 :
+                       Math.max(0, (1 - (elapsed - 4600) / 1400) * 0.88);
+    
+    if (scrimAlpha > 0) {
+      ctx.fillStyle = `rgba(10, 10, 10, ${scrimAlpha})`;
+      ctx.fillRect(0, 0, width, height);
+    }
+
+    // Base luminosa nítida das letras por trás dos corações (garante legibilidade absoluta)
+    if (elapsed > 900 && elapsed < 4800) {
+      const textAlpha = Math.min(1, (elapsed - 900) / 600);
+      ctx.save();
+      ctx.globalAlpha = textAlpha * 0.9;
+      ctx.font = `900 ${fontSize}px 'Montserrat', Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = '#e50914';
+      ctx.shadowBlur = 20;
+      
+      letters.forEach((char, i) => {
+        ctx.fillText(char, startX + i * colWidth, centerY);
+      });
+      ctx.restore();
+    }
+
+    if (elapsed > 1200 && !subtitleShown) {
       subtitleShown = true;
       if (marcelaSubtitle) {
         marcelaSubtitle.textContent = "Você é o amor da minha vida ❤️";
@@ -582,29 +620,29 @@ function triggerMarcelaHeartFormation(originX, originY) {
       }
     }
 
-    if (elapsed > 4500 && subtitleShown) {
+    if (elapsed > 4600 && subtitleShown) {
       if (marcelaSubtitle) marcelaSubtitle.classList.remove('active');
     }
 
     let allDead = true;
 
     particles.forEach(p => {
-      if (elapsed < 400) {
+      if (elapsed < 380) {
         p.x += p.vx;
         p.y += p.vy;
         p.vy += 0.35;
-      } else if (elapsed < 1600) {
-        p.x += (p.tx - p.x) * (p.damping * 2.5);
-        p.y += (p.ty - p.y) * (p.damping * 2.5);
+      } else if (elapsed < 1500) {
+        p.x += (p.tx - p.x) * (p.damping * 2.8);
+        p.y += (p.ty - p.y) * (p.damping * 2.8);
       } else if (elapsed < 4600) {
-        const pulse = Math.sin((elapsed - 1600) * 0.005 + (p.tx * 0.01)) * 0.12;
+        const pulse = Math.sin((elapsed - 1500) * 0.006) * 0.1;
         p.x = p.tx;
-        p.y = p.ty + pulse * 4;
+        p.y = p.ty;
         p.scale = 1 + pulse;
       } else {
-        p.y -= Math.random() * 1.8 + 0.8;
+        p.y -= Math.random() * 2 + 1;
         p.x += (Math.random() - 0.5) * 1.5;
-        p.alpha -= 0.018;
+        p.alpha -= 0.02;
       }
 
       if (p.alpha > 0) {
