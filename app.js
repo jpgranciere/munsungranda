@@ -496,8 +496,141 @@ if (slideBottomSheet) {
 }
 
 // ==========================================================
-// 8. EFEITOS DE CORAÇÕES FLUTUANTES (INTERATIVIDADE)
+// 8. EFEITOS DE CORAÇÕES & FORMAÇÃO DO NOME 'MARCELA' ❤️
 // ==========================================================
+const marcelaCanvas = document.getElementById('marcela-canvas');
+const marcelaSubtitle = document.getElementById('marcela-subtitle');
+let marcelaAnimId = null;
+
+function triggerMarcelaHeartFormation(originX, originY) {
+  if (!marcelaCanvas) return;
+  const ctx = marcelaCanvas.getContext('2d');
+  if (!ctx) return;
+
+  if (marcelaAnimId) {
+    cancelAnimationFrame(marcelaAnimId);
+    marcelaAnimId = null;
+  }
+
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  marcelaCanvas.width = width;
+  marcelaCanvas.height = height;
+
+  // 1. Gera coordenadas dos pontos da palavra "MARCELA" usando um canvas offscreen
+  const offCanvas = document.createElement('canvas');
+  offCanvas.width = width;
+  offCanvas.height = height;
+  const offCtx = offCanvas.getContext('2d', { willReadFrequently: true });
+
+  const fontSize = width < 500 ? Math.floor(width * 0.125) : Math.min(85, Math.floor(width * 0.085));
+  offCtx.font = `900 ${fontSize}px 'Montserrat', -apple-system, sans-serif`;
+  offCtx.textAlign = 'center';
+  offCtx.textBaseline = 'middle';
+  offCtx.fillStyle = '#ff0000';
+
+  const centerY = height * 0.44;
+  offCtx.fillText("MARCELA", width / 2, centerY);
+
+  const imgData = offCtx.getImageData(0, 0, width, height).data;
+  const targetPoints = [];
+  const step = width < 500 ? 7 : 9;
+
+  for (let y = 0; y < height; y += step) {
+    for (let x = 0; x < width; x += step) {
+      const alpha = imgData[(y * width + x) * 4 + 3];
+      if (alpha > 128) {
+        targetPoints.push({ x, y });
+      }
+    }
+  }
+
+  // 2. Cria as partículas de coração
+  const heartsPalette = ['❤️', '💖', '💕', '💘', '✨'];
+  const particles = targetPoints.map(target => {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 14 + 4;
+    return {
+      x: originX,
+      y: originY,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - (Math.random() * 8 + 5),
+      tx: target.x,
+      ty: target.y,
+      char: heartsPalette[Math.floor(Math.random() * heartsPalette.length)],
+      size: Math.random() * 6 + (width < 500 ? 14 : 18),
+      alpha: 1,
+      scale: 1,
+      damping: Math.random() * 0.04 + 0.06
+    };
+  });
+
+  spawnHeartBurst(originX, originY, 12);
+
+  const startTime = performance.now();
+  let subtitleShown = false;
+
+  function animate(now) {
+    const elapsed = now - startTime;
+    ctx.clearRect(0, 0, width, height);
+
+    if (elapsed > 1300 && !subtitleShown) {
+      subtitleShown = true;
+      if (marcelaSubtitle) {
+        marcelaSubtitle.textContent = "Você é o amor da minha vida ❤️";
+        marcelaSubtitle.classList.add('active');
+      }
+    }
+
+    if (elapsed > 4500 && subtitleShown) {
+      if (marcelaSubtitle) marcelaSubtitle.classList.remove('active');
+    }
+
+    let allDead = true;
+
+    particles.forEach(p => {
+      if (elapsed < 400) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.35;
+      } else if (elapsed < 1600) {
+        p.x += (p.tx - p.x) * (p.damping * 2.5);
+        p.y += (p.ty - p.y) * (p.damping * 2.5);
+      } else if (elapsed < 4600) {
+        const pulse = Math.sin((elapsed - 1600) * 0.005 + (p.tx * 0.01)) * 0.12;
+        p.x = p.tx;
+        p.y = p.ty + pulse * 4;
+        p.scale = 1 + pulse;
+      } else {
+        p.y -= Math.random() * 1.8 + 0.8;
+        p.x += (Math.random() - 0.5) * 1.5;
+        p.alpha -= 0.018;
+      }
+
+      if (p.alpha > 0) {
+        allDead = false;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.font = `${p.size * p.scale}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(p.char, p.x, p.y);
+        ctx.restore();
+      }
+    });
+
+    if (!allDead && elapsed < 6500) {
+      marcelaAnimId = requestAnimationFrame(animate);
+    } else {
+      ctx.clearRect(0, 0, width, height);
+      marcelaAnimId = null;
+      if (marcelaSubtitle) marcelaSubtitle.classList.remove('active');
+    }
+  }
+
+  marcelaAnimId = requestAnimationFrame(animate);
+}
+
 function spawnHeart(x, y) {
   const heart = document.createElement('div');
   heart.className = 'floating-heart';
@@ -523,14 +656,14 @@ function spawnHeartBurst(x, y, count = 10) {
   }
 }
 
-btnSendHeart.addEventListener('click', (e) => {
+btnSendHeart.addEventListener('click', () => {
   const rect = btnSendHeart.getBoundingClientRect();
-  spawnHeartBurst(rect.left + rect.width / 2, rect.top, 14);
+  triggerMarcelaHeartFormation(rect.left + rect.width / 2, rect.top);
 });
 
-btnFooterHeart.addEventListener('click', (e) => {
+btnFooterHeart.addEventListener('click', () => {
   const rect = btnFooterHeart.getBoundingClientRect();
-  spawnHeartBurst(rect.left + rect.width / 2, rect.top, 18);
+  triggerMarcelaHeartFormation(rect.left + rect.width / 2, rect.top);
 });
 
 // Navbar background ao rolar a página
